@@ -4,12 +4,12 @@
 /// @brief Engine class -- owns the subsystem registry instance for one engine-level lifetime.
 
 #include <cassert>
+#include <memory>
 #include <typeindex>
+#include <unordered_map>
+#include <vector>
 
-#include "Containers/HashMap.h"
-#include "Containers/Vec.h"
 #include "EngineExport.h"
-#include "Memory/Box.h"
 #include "Subsystem.h"
 
 namespace goleta
@@ -47,12 +47,13 @@ public:
     template <class T>
     T* findSubsystem()
     {
-        Box<Subsystem>* Slot = Subsystems.getMut(detail::subsystemTypeId<T>());
-        if (!Slot)
+        auto It = Subsystems.find(detail::subsystemTypeId<T>());
+        if (It == Subsystems.end())
             return nullptr;
-        assert(dynamic_cast<T*>(Slot->get()) == static_cast<T*>(Slot->get()) &&
+        std::unique_ptr<Subsystem>& Slot = It->second;
+        assert(dynamic_cast<T*>(Slot.get()) == static_cast<T*>(Slot.get()) &&
                "Subsystem TypeId invariant violated: registered type does not match requested type");
-        return static_cast<T*>(Slot->get());
+        return static_cast<T*>(Slot.get());
     }
 
     /// @brief Return the subsystem of type T. Asserts in debug if the subsystem is not registered.
@@ -70,9 +71,9 @@ protected:
     virtual bool acceptsCategory(SubsystemCategory Category) const;
 
 private:
-    HashMap<detail::SubsystemTypeId, Box<Subsystem>> Subsystems;
-    Vec<Subsystem*> InitOrder;
-    Vec<Subsystem*> TickOrder;
+    std::unordered_map<detail::SubsystemTypeId, std::unique_ptr<Subsystem>> Subsystems;
+    std::vector<Subsystem*> InitOrder;
+    std::vector<Subsystem*> TickOrder;
     bool Running = false;
 };
 

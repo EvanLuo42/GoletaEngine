@@ -4,14 +4,14 @@
 /// @brief Subsystem base classes, categories, dependencies, tick stages, and auto-registration macro.
 
 #include <cstdint>
+#include <memory>
+#include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <utility>
+#include <vector>
 
-#include "Containers/String.h"
-#include "Containers/Vec.h"
 #include "EngineExport.h"
-#include "Memory/Box.h"
 
 namespace goleta
 {
@@ -92,10 +92,10 @@ struct SubsystemFactoryEntry
     SubsystemTypeId TypeId;
     SubsystemCategory Category;
     /// @note Name must reference storage with static lifetime (typically the stringised class
-    ///       name from GOLETA_REGISTER_SUBSYSTEM). StringView does not own its bytes.
-    StringView Name;
-    Box<Subsystem> (*Factory)();
-    Vec<SubsystemTypeId> Dependencies;
+    ///       name from GOLETA_REGISTER_SUBSYSTEM). std::string_view does not own its bytes.
+    std::string_view Name;
+    std::unique_ptr<Subsystem> (*Factory)();
+    std::vector<SubsystemTypeId> Dependencies;
 };
 
 /// @brief Append an entry to the global subsystem registry. Called from macro expansions at static-init time.
@@ -108,12 +108,12 @@ SubsystemTypeId subsystemTypeId()
 }
 
 template <class T>
-Vec<SubsystemTypeId> gatherSubsystemDependencies()
+std::vector<SubsystemTypeId> gatherSubsystemDependencies()
 {
     if constexpr (requires { T::dependencies(); })
     {
         auto Result = T::dependencies();
-        return Vec<SubsystemTypeId>(Result.begin(), Result.end());
+        return std::vector<SubsystemTypeId>(Result.begin(), Result.end());
     }
     else
     {
@@ -124,13 +124,13 @@ Vec<SubsystemTypeId> gatherSubsystemDependencies()
 template <class T>
 struct SubsystemRegistrar
 {
-    SubsystemRegistrar(const SubsystemCategory Category, const StringView Name)
+    SubsystemRegistrar(const SubsystemCategory Category, const std::string_view Name)
     {
         registerSubsystemFactory(SubsystemFactoryEntry{
             subsystemTypeId<T>(),
             Category,
             Name,
-            []() -> Box<Subsystem> { return makeBox<T>(); },
+            []() -> std::unique_ptr<Subsystem> { return std::make_unique<T>(); },
             gatherSubsystemDependencies<T>(),
         });
     }
@@ -141,11 +141,11 @@ struct SubsystemRegistrar
 /// @brief Helper to declare a subsystem's static dependency list.
 /// @note  Use as: `static auto dependencies() { return goleta::dependsOn<AssetSubsystem, InputSubsystem>(); }`
 template <class... Deps>
-Vec<detail::SubsystemTypeId> dependsOn()
+std::vector<detail::SubsystemTypeId> dependsOn()
 {
-    Vec<detail::SubsystemTypeId> Out;
+    std::vector<detail::SubsystemTypeId> Out;
     Out.reserve(sizeof...(Deps));
-    (Out.push(detail::subsystemTypeId<Deps>()), ...);
+    (Out.push_back(detail::subsystemTypeId<Deps>()), ...);
     return Out;
 }
 

@@ -7,6 +7,8 @@
 #include <cassert>
 #include <queue>
 #include <ranges>
+#include <unordered_map>
+#include <vector>
 
 #include "SubsystemRegistry.h"
 
@@ -20,31 +22,32 @@ namespace
 ///        dependency-topological order (dependencies before dependents). Within an equal
 ///        topological rank, registration order is preserved (FIFO queue).
 /// @note  Asserts if any declared dependency is missing from Accepted, or if a cycle exists.
-Vec<size_t> topoSortAccepted(const Vec<const detail::SubsystemFactoryEntry*>& Accepted)
+std::vector<size_t> topoSortAccepted(const std::vector<const detail::SubsystemFactoryEntry*>& Accepted)
 {
-    const size_t N = Accepted.len();
+    const size_t N = Accepted.size();
 
-    HashMap<detail::SubsystemTypeId, size_t> IndexOf;
+    std::unordered_map<detail::SubsystemTypeId, size_t> IndexOf;
     IndexOf.reserve(N);
     for (size_t I = 0; I < N; ++I)
     {
-        IndexOf.insert(Accepted[I]->TypeId, I);
+        IndexOf.emplace(Accepted[I]->TypeId, I);
     }
 
-    Vec<Vec<size_t>> Forward(N);
-    Vec<size_t> InDegree(N, 0);
+    std::vector<std::vector<size_t>> Forward(N);
+    std::vector<size_t> InDegree(N, 0);
 
     for (size_t I = 0; I < N; ++I)
     {
         for (const detail::SubsystemTypeId& Dep : Accepted[I]->Dependencies)
         {
-            const size_t* DepIndex = IndexOf.get(Dep);
-            assert(DepIndex && "Subsystem declares a dependency that is not registered for this Engine's categories");
-            if (!DepIndex)
+            auto DepIt = IndexOf.find(Dep);
+            assert(DepIt != IndexOf.end() &&
+                   "Subsystem declares a dependency that is not registered for this Engine's categories");
+            if (DepIt == IndexOf.end())
             {
                 continue;
             }
-            Forward[*DepIndex].push(I);
+            Forward[DepIt->second].push_back(I);
             ++InDegree[I];
         }
     }
@@ -58,13 +61,13 @@ Vec<size_t> topoSortAccepted(const Vec<const detail::SubsystemFactoryEntry*>& Ac
         }
     }
 
-    Vec<size_t> Sorted;
+    std::vector<size_t> Sorted;
     Sorted.reserve(N);
     while (!Ready.empty())
     {
         const size_t I = Ready.front();
         Ready.pop();
-        Sorted.push(I);
+        Sorted.push_back(I);
         for (size_t Next : Forward[I])
         {
             if (--InDegree[Next] == 0)
@@ -74,7 +77,7 @@ Vec<size_t> topoSortAccepted(const Vec<const detail::SubsystemFactoryEntry*>& Ac
         }
     }
 
-    assert(Sorted.len() == N && "Subsystem dependency cycle detected");
+    assert(Sorted.size() == N && "Subsystem dependency cycle detected");
     return Sorted;
 }
 
@@ -104,32 +107,32 @@ void Engine::start()
 
     const auto& Registry = detail::subsystemRegistry();
 
-    Vec<const detail::SubsystemFactoryEntry*> Accepted;
-    Accepted.reserve(Registry.len());
+    std::vector<const detail::SubsystemFactoryEntry*> Accepted;
+    Accepted.reserve(Registry.size());
     for (const auto& Entry : Registry)
     {
         if (acceptsCategory(Entry.Category))
         {
-            Accepted.push(&Entry);
+            Accepted.push_back(&Entry);
         }
     }
 
-    const Vec<size_t> Order = topoSortAccepted(Accepted);
+    const std::vector<size_t> Order = topoSortAccepted(Accepted);
 
-    InitOrder.reserve(Order.len());
+    InitOrder.reserve(Order.size());
 
     for (const size_t Idx : Order)
     {
         const auto& Entry = *Accepted[Idx];
-        if (Subsystems.containsKey(Entry.TypeId))
+        if (Subsystems.contains(Entry.TypeId))
         {
             continue;
         }
 
-        Box<Subsystem> Instance = Entry.Factory();
+        std::unique_ptr<Subsystem> Instance = Entry.Factory();
         Subsystem* Raw = Instance.get();
-        Subsystems.insert(Entry.TypeId, std::move(Instance));
-        InitOrder.push(Raw);
+        Subsystems.emplace(Entry.TypeId, std::move(Instance));
+        InitOrder.push_back(Raw);
     }
 
     for (Subsystem* S : InitOrder)
@@ -137,7 +140,7 @@ void Engine::start()
         S->initialize(*this);
         if (S->shouldTick())
         {
-            TickOrder.push(S);
+            TickOrder.push_back(S);
         }
     }
 

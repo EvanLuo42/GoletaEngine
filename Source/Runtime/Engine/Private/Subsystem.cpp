@@ -14,18 +14,18 @@ TickStage Subsystem::tickStage() const { return TickStage::Update; }
 
 namespace detail {
 
-static Vec<SubsystemFactoryEntry>& mutableRegistry()
+static std::vector<SubsystemFactoryEntry>& mutableRegistry()
 {
-    static Vec<SubsystemFactoryEntry> Registry;
+    static std::vector<SubsystemFactoryEntry> Registry;
     return Registry;
 }
 
 void registerSubsystemFactory(SubsystemFactoryEntry Entry)
 {
-    mutableRegistry().push(std::move(Entry));
+    mutableRegistry().push_back(std::move(Entry));
 }
 
-const Vec<SubsystemFactoryEntry>& subsystemRegistry()
+const std::vector<SubsystemFactoryEntry>& subsystemRegistry()
 {
     return mutableRegistry();
 }

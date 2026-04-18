@@ -52,14 +52,14 @@ public:
 // Shared log used to observe init / tick ordering across the dependency-graph tests.
 struct OrderLog
 {
-    static Vec<String>& initEvents()
+    static std::vector<std::string>& initEvents()
     {
-        static Vec<String> Events;
+        static std::vector<std::string> Events;
         return Events;
     }
-    static Vec<String>& tickEvents()
+    static std::vector<std::string>& tickEvents()
     {
-        static Vec<String> Events;
+        static std::vector<std::string> Events;
         return Events;
     }
 };
@@ -67,8 +67,8 @@ struct OrderLog
 class UpstreamSubsystem : public EngineSubsystem
 {
 public:
-    void initialize(Engine&) override { OrderLog::initEvents().push("Upstream"); }
-    void tick(float) override { OrderLog::tickEvents().push("Upstream"); }
+    void initialize(Engine&) override { OrderLog::initEvents().push_back("Upstream"); }
+    void tick(float) override { OrderLog::tickEvents().push_back("Upstream"); }
     [[nodiscard]] bool shouldTick() const override { return true; }
 };
 
@@ -76,8 +76,8 @@ class MidstreamSubsystem : public EngineSubsystem
 {
 public:
     static auto dependencies() { return goleta::dependsOn<UpstreamSubsystem>(); }
-    void initialize(Engine&) override { OrderLog::initEvents().push("Midstream"); }
-    void tick(float) override { OrderLog::tickEvents().push("Midstream"); }
+    void initialize(Engine&) override { OrderLog::initEvents().push_back("Midstream"); }
+    void tick(float) override { OrderLog::tickEvents().push_back("Midstream"); }
     [[nodiscard]] bool shouldTick() const override { return true; }
 };
 
@@ -85,15 +85,15 @@ class DownstreamSubsystem : public EngineSubsystem
 {
 public:
     static auto dependencies() { return goleta::dependsOn<MidstreamSubsystem>(); }
-    void initialize(Engine&) override { OrderLog::initEvents().push("Downstream"); }
-    void tick(float) override { OrderLog::tickEvents().push("Downstream"); }
+    void initialize(Engine&) override { OrderLog::initEvents().push_back("Downstream"); }
+    void tick(float) override { OrderLog::tickEvents().push_back("Downstream"); }
     [[nodiscard]] bool shouldTick() const override { return true; }
 };
 
 class PreUpdateSubsystem : public EngineSubsystem
 {
 public:
-    void tick(float) override { OrderLog::tickEvents().push("Pre"); }
+    void tick(float) override { OrderLog::tickEvents().push_back("Pre"); }
     bool shouldTick() const override { return true; }
     TickStage tickStage() const override { return TickStage::PreUpdate; }
 };
@@ -101,7 +101,7 @@ public:
 class RenderStageSubsystem : public EngineSubsystem
 {
 public:
-    void tick(float) override { OrderLog::tickEvents().push("Render"); }
+    void tick(float) override { OrderLog::tickEvents().push_back("Render"); }
     bool shouldTick() const override { return true; }
     TickStage tickStage() const override { return TickStage::Render; }
 };
@@ -233,7 +233,7 @@ namespace
 {
 
 /// Position of the first occurrence of Name in Events. -1 if absent.
-int indexOf(const Vec<String>& Events, StringView Name)
+int indexOf(const std::vector<std::string>& Events, std::string_view Name)
 {
     auto It = std::find(Events.begin(), Events.end(), Name);
     return It == Events.end() ? -1 : static_cast<int>(It - Events.begin());
@@ -302,7 +302,7 @@ TEST(SubsystemTest, DefaultTickStageIsUpdate)
 TEST(DependsOnHelper, BuildsTypeIdList)
 {
     auto List = goleta::dependsOn<UpstreamSubsystem, MidstreamSubsystem>();
-    ASSERT_EQ(List.len(), 2u);
+    ASSERT_EQ(List.size(), 2u);
     EXPECT_EQ(List[0], goleta::detail::subsystemTypeId<UpstreamSubsystem>());
     EXPECT_EQ(List[1], goleta::detail::subsystemTypeId<MidstreamSubsystem>());
 }

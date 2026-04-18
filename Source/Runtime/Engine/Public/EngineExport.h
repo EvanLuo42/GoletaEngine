@@ -3,41 +3,41 @@
 #define ENGINE_API_H
 
 #ifdef ENGINE_STATIC
-#define ENGINE_API
-#define ENGINE_NO_EXPORT
+#  define ENGINE_API
+#  define ENGINE_NO_EXPORT
 #else
-#ifndef ENGINE_API
-#ifdef Engine_EXPORTS
-/* We are building this library */
-#define ENGINE_API __declspec(dllexport)
-#else
-/* We are using this library */
-#define ENGINE_API __declspec(dllimport)
-#endif
-#endif
+#  ifndef ENGINE_API
+#    ifdef Engine_EXPORTS
+        /* We are building this library */
+#      define ENGINE_API __declspec(dllexport)
+#    else
+        /* We are using this library */
+#      define ENGINE_API __declspec(dllimport)
+#    endif
+#  endif
 
-#ifndef ENGINE_NO_EXPORT
-#define ENGINE_NO_EXPORT
-#endif
+#  ifndef ENGINE_NO_EXPORT
+#    define ENGINE_NO_EXPORT 
+#  endif
 #endif
 
 #ifndef ENGINE_DEPRECATED
-#define ENGINE_DEPRECATED __declspec(deprecated)
+#  define ENGINE_DEPRECATED __declspec(deprecated)
 #endif
 
 #ifndef ENGINE_DEPRECATED_EXPORT
-#define ENGINE_DEPRECATED_EXPORT ENGINE_API ENGINE_DEPRECATED
+#  define ENGINE_DEPRECATED_EXPORT ENGINE_API ENGINE_DEPRECATED
 #endif
 
 #ifndef ENGINE_DEPRECATED_NO_EXPORT
-#define ENGINE_DEPRECATED_NO_EXPORT ENGINE_NO_EXPORT ENGINE_DEPRECATED
+#  define ENGINE_DEPRECATED_NO_EXPORT ENGINE_NO_EXPORT ENGINE_DEPRECATED
 #endif
 
 /* NOLINTNEXTLINE(readability-avoid-unconditional-preprocessor-if) */
 #if 0 /* DEFINE_NO_DEPRECATED */
-#ifndef ENGINE_NO_DEPRECATED
-#define ENGINE_NO_DEPRECATED
-#endif
+#  ifndef ENGINE_NO_DEPRECATED
+#    define ENGINE_NO_DEPRECATED
+#  endif
 #endif
 
 #endif /* ENGINE_API_H */
