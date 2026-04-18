@@ -1,0 +1,72 @@
+---
+# LLVM-style naming for all identifiers.
+# Reference: https://llvm.org/docs/CodingStandards.html#name-types-functions-variables-and-enumerators-properly
+
+Checks: >
+  -*,
+  readability-identifier-naming
+
+CheckOptions:
+  # ---------- Types ----------
+  - { key: readability-identifier-naming.NamespaceCase,            value: lower_case   }
+  - { key: readability-identifier-naming.InlineNamespaceCase,      value: lower_case   }
+
+  - { key: readability-identifier-naming.ClassCase,                value: CamelCase    }
+  - { key: readability-identifier-naming.StructCase,               value: CamelCase    }
+  - { key: readability-identifier-naming.UnionCase,                value: CamelCase    }
+  - { key: readability-identifier-naming.EnumCase,                 value: CamelCase    }
+  - { key: readability-identifier-naming.TypedefCase,              value: CamelCase    }
+  - { key: readability-identifier-naming.TypeAliasCase,            value: CamelCase    }
+
+  # ---------- Template parameters ----------
+  - { key: readability-identifier-naming.TemplateParameterCase,    value: CamelCase    }
+  - { key: readability-identifier-naming.TypeTemplateParameterCase,       value: CamelCase }
+  - { key: readability-identifier-naming.ValueTemplateParameterCase,      value: CamelCase }
+  - { key: readability-identifier-naming.TemplateTemplateParameterCase,   value: CamelCase }
+
+  # ---------- Functions / methods ----------
+  - { key: readability-identifier-naming.FunctionCase,             value: camelBack    }
+  - { key: readability-identifier-naming.MethodCase,               value: camelBack    }
+  - { key: readability-identifier-naming.VirtualMethodCase,        value: camelBack    }
+  - { key: readability-identifier-naming.ClassMethodCase,          value: camelBack    }
+  - { key: readability-identifier-naming.PrivateMethodCase,        value: camelBack    }
+  - { key: readability-identifier-naming.ProtectedMethodCase,      value: camelBack    }
+  - { key: readability-identifier-naming.PublicMethodCase,         value: camelBack    }
+
+  # ---------- Variables ----------
+  # LLVM: variables are CamelCase (capital first letter), same as members.
+  - { key: readability-identifier-naming.VariableCase,             value: CamelCase    }
+  - { key: readability-identifier-naming.LocalVariableCase,        value: CamelCase    }
+  - { key: readability-identifier-naming.ParameterCase,            value: CamelCase    }
+  - { key: readability-identifier-naming.GlobalVariableCase,       value: CamelCase    }
+  - { key: readability-identifier-naming.StaticVariableCase,       value: CamelCase    }
+
+  # ---------- Members ----------
+  - { key: readability-identifier-naming.MemberCase,               value: CamelCase    }
+  - { key: readability-identifier-naming.PublicMemberCase,         value: CamelCase    }
+  - { key: readability-identifier-naming.ProtectedMemberCase,      value: CamelCase    }
+  - { key: readability-identifier-naming.PrivateMemberCase,        value: CamelCase    }
+  - { key: readability-identifier-naming.ClassMemberCase,          value: CamelCase    }
+
+  # ---------- Constants / constexpr ----------
+  - { key: readability-identifier-naming.ConstantCase,             value: CamelCase    }
+  - { key: readability-identifier-naming.ConstexprVariableCase,    value: CamelCase    }
+  - { key: readability-identifier-naming.ConstexprFunctionCase,    value: camelBack    }
+  - { key: readability-identifier-naming.ConstexprMethodCase,      value: camelBack    }
+  - { key: readability-identifier-naming.StaticConstantCase,       value: CamelCase    }
+  - { key: readability-identifier-naming.GlobalConstantCase,       value: CamelCase    }
+  - { key: readability-identifier-naming.LocalConstantCase,        value: CamelCase    }
+  - { key: readability-identifier-naming.ClassConstantCase,        value: CamelCase    }
+  - { key: readability-identifier-naming.ConstantParameterCase,    value: CamelCase    }
+  - { key: readability-identifier-naming.ConstantMemberCase,       value: CamelCase    }
+
+  # ---------- Enum constants ----------
+  # LLVM: enumerators are CamelCase (no ALL_CAPS).
+  - { key: readability-identifier-naming.EnumConstantCase,         value: CamelCase    }
+  - { key: readability-identifier-naming.ScopedEnumConstantCase,   value: CamelCase    }
+
+  # ---------- Macros ----------
+  - { key: readability-identifier-naming.MacroDefinitionCase,      value: UPPER_CASE   }
+
+HeaderFilterRegex: '.*'
+FormatStyle: file
