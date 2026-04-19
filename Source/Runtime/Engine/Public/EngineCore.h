@@ -44,16 +44,16 @@ public:
     bool isRunning() const { return Running; }
 
     /// @brief Return the subsystem of type T owned by this engine, or nullptr if none is registered.
+    /// @note  The TypeId invariant (key -> concrete type) is enforced at registration time; the
+    ///        factory that produced Slot is guaranteed to have returned a T. There is no
+    ///        dynamic_cast check here because the engine builds -fno-rtti / /GR-.
     template <class T>
     T* findSubsystem()
     {
         auto It = Subsystems.find(detail::subsystemTypeId<T>());
         if (It == Subsystems.end())
             return nullptr;
-        std::unique_ptr<Subsystem>& Slot = It->second;
-        assert(dynamic_cast<T*>(Slot.get()) == static_cast<T*>(Slot.get()) &&
-               "Subsystem TypeId invariant violated: registered type does not match requested type");
-        return static_cast<T*>(Slot.get());
+        return static_cast<T*>(It->second.get());
     }
 
     /// @brief Return the subsystem of type T. Asserts in debug if the subsystem is not registered.

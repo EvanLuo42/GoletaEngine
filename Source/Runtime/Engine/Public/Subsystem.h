@@ -6,12 +6,11 @@
 #include <cstdint>
 #include <memory>
 #include <string_view>
-#include <typeindex>
-#include <typeinfo>
 #include <utility>
 #include <vector>
 
 #include "EngineExport.h"
+#include "TypeHash.h"
 
 namespace goleta
 {
@@ -81,11 +80,10 @@ namespace detail
 {
 
 /// @brief Identity for a Subsystem class at registration and lookup time.
-/// @note  Backed by std::type_index so the same T resolves to the same id across DSO
-///        boundaries. Using the address of a function-local static char works within a single
-///        shared library but silently diverges when two modules each instantiate the template,
-///        which is fatal for plugin-style loading.
-using SubsystemTypeId = std::type_index;
+/// @note  Backed by a compile-time FNV-1a hash of the compiler's pretty-function name for T
+///        (see Core/TypeHash.h). Stable within one build across DSO boundaries because the
+///        compiler emits the same source string for each T in every translation unit.
+using SubsystemTypeId = uint64_t;
 
 struct SubsystemFactoryEntry
 {
@@ -102,9 +100,9 @@ struct SubsystemFactoryEntry
 ENGINE_API void registerSubsystemFactory(SubsystemFactoryEntry Entry);
 
 template <class T>
-SubsystemTypeId subsystemTypeId()
+constexpr SubsystemTypeId subsystemTypeId() noexcept
 {
-    return SubsystemTypeId{typeid(T)};
+    return typeHash<T>();
 }
 
 template <class T>
