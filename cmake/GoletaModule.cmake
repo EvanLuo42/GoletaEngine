@@ -71,6 +71,8 @@ function(goleta_add_module MODULE_NAME)
         target_link_libraries(${MODULE_NAME} PUBLIC ${ARG_DEPENDENCIES})
     endif()
 
+    target_link_libraries(${MODULE_NAME} PUBLIC goleta_compile_options)
+
     target_compile_features(${MODULE_NAME} PUBLIC cxx_std_20)
 
     install(TARGETS ${MODULE_NAME}

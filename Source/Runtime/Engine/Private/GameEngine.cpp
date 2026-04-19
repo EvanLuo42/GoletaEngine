@@ -3,7 +3,8 @@
 
 #include "GameEngine.h"
 
-namespace goleta {
+namespace goleta
+{
 
 GameEngine::GameEngine() = default;
 GameEngine::~GameEngine() = default;

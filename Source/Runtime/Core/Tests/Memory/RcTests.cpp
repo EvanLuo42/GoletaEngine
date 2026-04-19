@@ -15,11 +15,18 @@ using namespace goleta;
 class Tracer : public RefCounted
 {
 public:
-    explicit Tracer(int* DtorCounter) : Dtor(DtorCounter) {}
+    explicit Tracer(int* DtorCounter)
+        : Dtor(DtorCounter)
+    {
+    }
     int Value = 0;
 
 protected:
-    ~Tracer() override { if (Dtor) ++*Dtor; }
+    ~Tracer() override
+    {
+        if (Dtor)
+            ++*Dtor;
+    }
 
 private:
     int* Dtor;

@@ -5,7 +5,8 @@
 
 #include "EngineCore.h"
 
-namespace goleta {
+namespace goleta
+{
 
 /// @brief Engine flavour used by shipped game executables. Accepts Engine and Game subsystem categories.
 class ENGINE_API GameEngine : public Engine

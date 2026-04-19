@@ -7,6 +7,46 @@ option(GOLETA_BUILD_TESTS     "Build unit tests"                          ON)
 option(GOLETA_ENABLE_COVERAGE "Link with /PROFILE for VS Code Coverage"   OFF)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
 
+# CMake injects /EHsc into CMAKE_CXX_FLAGS by default. Strip it so goleta_compile_options'
+# /EHs-c- applies without MSVC D9025 "overriding /EHs with /EHs-" noise. Targets that still
+# need exceptions (e.g. FetchContent'd GoogleTest) set their own /EHsc at target scope.
+if(MSVC)
+    string(REGEX REPLACE "/EH[a-zA-Z-]*" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
+
+# Interface target carrying engine-wide compile / link options. Only goleta modules link it;
+# FetchContent'd third-party (GoogleTest, etc.) keeps its own flags to avoid build breakage.
+#
+# Disabled here:
+#   - C++ exceptions (non-deterministic frame-time cost, binary bloat, console SDKs expect off).
+# Enabled here:
+#   - Hidden symbol visibility (smaller .so / faster link on ELF/Mach-O).
+#   - Per-function/per-data sections + linker dead-strip (drops unused code).
+add_library(goleta_compile_options INTERFACE)
+if(MSVC)
+    target_compile_options(goleta_compile_options INTERFACE
+        /EHs-c-
+        /Gy
+        /Gw
+    )
+    target_compile_definitions(goleta_compile_options INTERFACE
+        _HAS_EXCEPTIONS=0
+    )
+else()
+    target_compile_options(goleta_compile_options INTERFACE
+        -fno-exceptions
+        -fvisibility=hidden
+        -fvisibility-inlines-hidden
+        -ffunction-sections
+        -fdata-sections
+    )
+    if(APPLE)
+        target_link_options(goleta_compile_options INTERFACE -Wl,-dead_strip)
+    else()
+        target_link_options(goleta_compile_options INTERFACE -Wl,--gc-sections)
+    endif()
+endif()
+
 if(GOLETA_ENABLE_COVERAGE AND MSVC)
     add_link_options(/PROFILE)
 endif()

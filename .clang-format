@@ -35,8 +35,9 @@ BreakStringLiterals: true
 
 # ---------- Alignment ----------
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: None
-AlignConsecutiveDeclarations: None
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveBitFields: Consecutive
 AlignConsecutiveMacros: Consecutive
 AlignEscapedNewlines: Left
 AlignOperands: Align
