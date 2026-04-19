@@ -1,4 +1,7 @@
 add_subdirectory(Core)
 add_subdirectory(RHI)
+if(WIN32)
+    add_subdirectory(RHID3D12)
+endif()
 # add_subdirectory(Renderer)
 add_subdirectory(Engine)

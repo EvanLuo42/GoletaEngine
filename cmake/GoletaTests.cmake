@@ -62,6 +62,16 @@ function(goleta_create_engine_tests)
     target_compile_features(${_target} PRIVATE cxx_std_20)
     set_target_properties(${_target} PROPERTIES FOLDER "Tests")
 
+    # Optional extras contributed by modules (e.g. RHID3D12 Tests add Slang::Slang).
+    get_property(_extra_libs GLOBAL PROPERTY GOLETA_TEST_EXTRA_LIBS)
+    if(_extra_libs)
+        target_link_libraries(${_target} PRIVATE ${_extra_libs})
+    endif()
+    get_property(_extra_defs GLOBAL PROPERTY GOLETA_TEST_EXTRA_DEFS)
+    if(_extra_defs)
+        target_compile_definitions(${_target} PRIVATE ${_extra_defs})
+    endif()
+
     if(WIN32)
         add_custom_command(TARGET ${_target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -69,7 +79,23 @@ function(goleta_create_engine_tests)
                     $<TARGET_FILE_DIR:${_target}>
             COMMAND_EXPAND_LISTS
         )
+        # Copy Slang runtime DLLs (its bin/ dir holds slang.dll + satellite DLLs).
+        if(DEFINED GOLETA_SLANG_BIN_DIR AND EXISTS "${GOLETA_SLANG_BIN_DIR}")
+            add_custom_command(TARGET ${_target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                        "${GOLETA_SLANG_BIN_DIR}"
+                        "$<TARGET_FILE_DIR:${_target}>")
+        endif()
     endif()
+
+    # Copy test shader fixtures so tests can locate them via cwd/TestShaders/.
+    get_property(_shader_dirs GLOBAL PROPERTY GOLETA_TEST_SHADER_DIRS)
+    foreach(_sd IN LISTS _shader_dirs)
+        add_custom_command(TARGET ${_target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${_sd}"
+                    "$<TARGET_FILE_DIR:${_target}>/TestShaders")
+    endforeach()
 
     gtest_discover_tests(${_target})
 endfunction()

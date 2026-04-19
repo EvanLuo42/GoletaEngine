@@ -1,57 +1,37 @@
-#include <gtest/gtest.h>
+/// @file
+/// @brief Command-pool lifecycle + thread-local recording. Ported from RHICommandPoolTests.cpp
+///        into the cross-backend framework so it runs on every registered backend.
 
 #include <atomic>
 #include <thread>
 #include <vector>
 
-#include "RHICommandList.h"
-#include "RHIDevice.h"
-#include "RHIInstance.h"
-#include "RHIQueue.h"
-#include "RHISync.h"
+#include "Common/RhiTestFixture.h"
+#include "Common/RhiTestHelpers.h"
 
-using namespace goleta;
-using namespace goleta::rhi;
+using namespace goleta::rhi::tests;
 
-namespace
+GPU_TEST(CommandPool, PoolTracksQueueKind, BackendMask::All)
 {
-
-Rc<IRhiDevice> makeDevice()
-{
-    RhiInstanceCreateInfo II{};
-    II.Backend    = BackendKind::Null;
-    auto Instance = createInstance(II);
-    EXPECT_FALSE(Instance.isNull());
-    RhiDeviceCreateInfo DI{};
-    return Instance->createDevice(DI);
-}
-
-} // namespace
-
-TEST(RHICommandPoolTests, PoolTracksQueueKind)
-{
-    auto Device = makeDevice();
     for (auto Kind : {RhiQueueKind::Graphics, RhiQueueKind::Compute, RhiQueueKind::Copy})
     {
-        auto Pool = Device->createCommandPool(Kind);
-        ASSERT_FALSE(Pool.isNull());
+        auto Pool = F.Device->createCommandPool(Kind);
+        ASSERT_TRUE(Pool);
         EXPECT_EQ(Pool->queueKind(), Kind);
     }
 }
 
-TEST(RHICommandPoolTests, AllocatedListInheritsQueueKind)
+GPU_TEST(CommandPool, AllocatedListInheritsQueueKind, BackendMask::All)
 {
-    auto Device = makeDevice();
-    auto Pool   = Device->createCommandPool(RhiQueueKind::Compute);
-    auto List   = Pool->allocate();
-    ASSERT_FALSE(List.isNull());
+    auto Pool = F.Device->createCommandPool(RhiQueueKind::Compute);
+    auto List = Pool->allocate();
+    ASSERT_TRUE(List);
     EXPECT_EQ(List->queueKind(), RhiQueueKind::Compute);
 }
 
-TEST(RHICommandPoolTests, AllocateMultipleAndResetDoesNotCrash)
+GPU_TEST(CommandPool, AllocateMultipleAndResetDoesNotCrash, BackendMask::All)
 {
-    auto Device = makeDevice();
-    auto Pool   = Device->createCommandPool(RhiQueueKind::Graphics);
+    auto Pool = F.Device->createCommandPool(RhiQueueKind::Graphics);
 
     std::vector<Rc<IRhiCommandList>> Lists;
     for (int I = 0; I < 16; ++I)
@@ -65,15 +45,12 @@ TEST(RHICommandPoolTests, AllocateMultipleAndResetDoesNotCrash)
     Pool->reset();
 
     auto After = Pool->allocate();
-    ASSERT_FALSE(After.isNull());
+    ASSERT_TRUE(After);
 }
 
-TEST(RHICommandPoolTests, MultiThreadedRecordingUsesSeparatePoolsPerThread)
+GPU_TEST(CommandPool, MultiThreadedRecordingUsesSeparatePoolsPerThread, BackendMask::All)
 {
-    auto Device = makeDevice();
-    auto Queue  = Device->getQueue(RhiQueueKind::Graphics);
-    auto Fence  = Device->createFence(0);
-
+    auto Fence = F.Device->createFence(0);
     constexpr int ThreadCount    = 4;
     constexpr int ListsPerThread = 8;
 
@@ -86,13 +63,14 @@ TEST(RHICommandPoolTests, MultiThreadedRecordingUsesSeparatePoolsPerThread)
         Workers.emplace_back(
             [&, T]()
             {
-                Rc<IRhiCommandPool> Pool = Device->createCommandPool(RhiQueueKind::Graphics);
+                auto Pool = F.Device->createCommandPool(RhiQueueKind::Graphics);
                 for (int I = 0; I < ListsPerThread; ++I)
                 {
-                    Rc<IRhiCommandList> List = Pool->allocate();
+                    auto List = Pool->allocate();
                     List->begin();
                     List->beginDebugScope("Worker", 0);
-                    List->draw(3, 1, 0, 0);
+                    // No draw here — cross-backend tests can't issue a valid draw without a
+                    // bound pipeline + render pass, and the D3D12 debug layer would reject it.
                     List->endDebugScope();
                     List->end();
                     PerThreadLists[T].emplace_back(std::move(List));
@@ -100,8 +78,7 @@ TEST(RHICommandPoolTests, MultiThreadedRecordingUsesSeparatePoolsPerThread)
                 }
             });
     }
-    for (auto& W : Workers)
-        W.join();
+    for (auto& W : Workers) W.join();
 
     EXPECT_EQ(RecordedLists.load(), ThreadCount * ListsPerThread);
 
@@ -116,7 +93,7 @@ TEST(RHICommandPoolTests, MultiThreadedRecordingUsesSeparatePoolsPerThread)
     Info.CommandListCount = static_cast<uint32_t>(RawLists.size());
     Info.SignalFences     = &Signal;
     Info.SignalFenceCount = 1;
-    EXPECT_TRUE(Queue->submit(Info).isOk());
+    EXPECT_TRUE(F.Gfx->submit(Info).isOk());
 
     const auto WaitR = Fence->wait(1);
     ASSERT_TRUE(WaitR.isOk());

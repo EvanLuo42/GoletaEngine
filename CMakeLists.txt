@@ -62,6 +62,8 @@ include(GoletaModule)
 if(GOLETA_BUILD_TESTS)
     enable_testing()
     include(GoletaTests)
+    include(FetchSlangPrebuilt)
+    goleta_fetch_slang_prebuilt()
 endif()
 
 add_subdirectory(Source)

@@ -26,8 +26,8 @@ TEST(RHIBackendRegistryTests, NullBackendIsAlwaysRegistered)
 
 TEST(RHIBackendRegistryTests, UnregisteredBackendReturnsNullptr)
 {
-    // D3D12 / Vulkan / console backends are not linked into Engine.Tests.
-    EXPECT_EQ(findRhiBackend(BackendKind::D3D12),     nullptr);
+    // Vulkan / console backends are not linked into Engine.Tests. D3D12 is registered on
+    // Windows via the RHID3D12 module and intentionally omitted from this list.
     EXPECT_EQ(findRhiBackend(BackendKind::Vulkan),    nullptr);
     EXPECT_EQ(findRhiBackend(BackendKind::D3D12Xbox), nullptr);
     EXPECT_EQ(findRhiBackend(BackendKind::GNMX),      nullptr);
@@ -37,7 +37,7 @@ TEST(RHIBackendRegistryTests, UnregisteredBackendReturnsNullptr)
 TEST(RHIBackendRegistryTests, CreateInstanceWithUnregisteredBackendReturnsNull)
 {
     RhiInstanceCreateInfo Info{};
-    Info.Backend = BackendKind::D3D12;
+    Info.Backend = BackendKind::Vulkan;
     Rc<IRhiInstance> Instance = createInstance(Info);
     EXPECT_TRUE(Instance.isNull());
 }

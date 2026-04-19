@@ -15,3 +15,12 @@ set(SPDLOG_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
 set(SPDLOG_BUILD_EXAMPLE  OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(spdlog EXCLUDE_FROM_ALL)
+
+# D3D12 Memory Allocator (AMD) — suballocates ID3D12Resource behind a small
+# allocator surface. Loaded only on Windows and only when the submodule has
+# been initialised. RHID3D12 falls back to committed resources otherwise.
+if(WIN32 AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/D3D12MemoryAllocator/CMakeLists.txt")
+    set(D3D12MA_BUILD_SAMPLE OFF CACHE BOOL "" FORCE)
+    set(D3D12MA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    add_subdirectory(D3D12MemoryAllocator EXCLUDE_FROM_ALL)
+endif()
