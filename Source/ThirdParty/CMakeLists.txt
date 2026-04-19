@@ -24,3 +24,13 @@ if(WIN32 AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/D3D12MemoryAllocator/CMakeLists
     set(D3D12MA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     add_subdirectory(D3D12MemoryAllocator EXCLUDE_FROM_ALL)
 endif()
+
+# enkiTS -- task scheduler used by RenderGraph for parallel pass recording.
+# Forced build settings: no C interface, no examples, static-linked.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/enkiTS/CMakeLists.txt")
+    set(ENKITS_BUILD_C_INTERFACE OFF CACHE BOOL "" FORCE)
+    set(ENKITS_BUILD_EXAMPLES    OFF CACHE BOOL "" FORCE)
+    set(ENKITS_BUILD_SHARED      OFF CACHE BOOL "" FORCE)
+    set(ENKITS_INSTALL           OFF CACHE BOOL "" FORCE)
+    add_subdirectory(enkiTS EXCLUDE_FROM_ALL)
+endif()

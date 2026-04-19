@@ -7,3 +7,6 @@
 [submodule "Source/ThirdParty/D3D12MemoryAllocator"]
 	path = Source/ThirdParty/D3D12MemoryAllocator
 	url = git@github.com:GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator.git
+[submodule "Source/ThirdParty/enkiTS"]
+	path = Source/ThirdParty/enkiTS
+	url = git@github.com:dougbinks/enkiTS.git
